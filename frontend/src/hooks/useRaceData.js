@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000/races";
+import { RACES_URL } from "@/lib/api";
+
+const BASE_URL = RACES_URL;
 
 // 1. FETCH METADATA: Drivers, Team Colors, Event Name
 export const useRaceMeta = (year, gp) => {

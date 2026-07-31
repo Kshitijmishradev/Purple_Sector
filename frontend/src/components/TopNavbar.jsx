@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 const navLinks = [
   { to: "/lap-times", label: "Live Timing" },
   { to: "/telemetry", label: "Telemetry" },
+  { to: "/live", label: "Race Replay" },
   { to: "/calender", label: "Calendar" },
   { to: "/strategy", label: "Drivers" },
   { to: "/technical", label: "Teams" },

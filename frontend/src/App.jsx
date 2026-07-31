@@ -7,9 +7,11 @@ import StrategyPage from "./features/strategy/StrategyPage";
 import TechnicalPage from "./features/technical/TechnicalPage";
 import CalenderPage from "./features/calender/CalenderPage";
 import TelemetryPage from "./features/telemetry/TelemetryPage";
+import LivePage from "./features/live/LivePage";
 
 import { useEffect } from "react";
 import axios from "axios";
+import { RACES_URL } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -29,7 +31,7 @@ function App() {
   useEffect(() => {
     const fetchRaces = async () => {
       try {
-        const { data } = await axios.get(`http://127.0.0.1:8000/races/${year}`);
+        const { data } = await axios.get(`${RACES_URL}/${year}`);
         setAvailableGPs(data.events);
         if (!data.events.includes(gp)) {
           setGp(data.events[0]);
@@ -78,7 +80,7 @@ function App() {
                 Waiting for schedule data from the API. If this persists,
                 confirm the backend is running at{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                  http://127.0.0.1:8000
+                  {import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000"}
                 </code>
                 .
               </AlertDescription>
@@ -124,6 +126,10 @@ function App() {
             element={renderPage(
               <TelemetryPage key={`${year}-${gp}`} year={year} gp={gp} />,
             )}
+          />
+          <Route
+            path="/live"
+            element={renderPage(<LivePage year={year} gp={gp} />)}
           />
           <Route
             path="/race-control"

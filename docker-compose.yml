@@ -1,0 +1,103 @@
+services:
+  # --- Cache --------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    # --save "" disables RDB snapshots. This is a pure cache: everything in it
+    # is recomputable, and persistence costs a fork + copy-on-write memory
+    # spike you do not want next to a pandas workload.
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- Broker -------------------------------------------------------------
+  # Redpanda over Kafka: same protocol, same client library, ~300MB instead of
+  # ~1GB, no JVM, no ZooKeeper, starts in about two seconds.
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      # Two listeners: containers reach it at redpanda:9092, your laptop and
+      # rpk reach the same broker at localhost:19092.
+      - --kafka-addr=INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092
+      - --advertise-kafka-addr=INTERNAL://redpanda:9092,EXTERNAL://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9644:9644"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Web UI for the broker. Not required, but being able to see topics,
+  # partitions and raw messages while you build is worth the 100MB.
+  console:
+    image: redpandadata/console:v2.7.2
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    ports:
+      - "8080:8080"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  # --- API ----------------------------------------------------------------
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BOOTSTRAP: redpanda:9092
+      KAFKA_TOPIC: f1.timing
+      KAFKA_GROUP: gridlogic-live
+      FASTF1_CACHE_DIR: /app/data_cache
+      ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      CACHE_VERSION: v1
+    volumes:
+      - ./backend/src:/app/src          # live reload while you work
+      - fastf1-cache:/app/data_cache    # survives container restarts
+    depends_on:
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # --- Stream processor ---------------------------------------------------
+  # Its own container on purpose. Run `docker compose up --scale consumer=2`
+  # and watch Redpanda rebalance partitions across the group.
+  consumer:
+    build: ./backend
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BOOTSTRAP: redpanda:9092
+      KAFKA_TOPIC: f1.timing
+      KAFKA_GROUP: gridlogic-live
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    command: python -m src.stream.consumer
+
+volumes:
+  fastf1-cache:

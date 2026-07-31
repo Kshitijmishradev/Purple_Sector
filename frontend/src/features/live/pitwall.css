@@ -1,0 +1,362 @@
+/* ==========================================================================
+   Pit wall — timing screen styling
+   Scoped under .pw so none of this leaks into the analytics pages.
+
+   Colour is never decorative here. Purple, green and yellow carry the same
+   meaning they do on an FIA timing monitor (session best, personal best,
+   slower), and every other hue on screen is a team colour coming from data.
+   ========================================================================== */
+
+.pw {
+  --pw-void: #06080b;
+  --pw-panel: #0b1016;
+  --pw-panel-alt: #0e141c;
+  --pw-line: #1a2430;
+  --pw-line-bright: #27374a;
+  --pw-dim: #56687b;
+  --pw-text: #c7d5e3;
+  --pw-bright: #f2f7fc;
+
+  --t-purple: #b14cff;
+  --t-green: #00d46a;
+  --t-yellow: #ffd024;
+  --t-red: #ff2d3c;
+
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  background: var(--pw-void);
+  color: var(--pw-text);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--pw-line);
+}
+
+/* Instrument surfaces are square. Rounded corners read as "web app". */
+.pw * {
+  border-radius: 0;
+}
+
+.pw-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pw-dim);
+}
+
+/* --- Header bar --------------------------------------------------------- */
+
+.pw-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  border-bottom: 1px solid var(--pw-line);
+  background: var(--pw-panel);
+}
+
+.pw-flag {
+  width: 8px;
+  align-self: stretch;
+  background: var(--t-green);
+}
+.pw-flag[data-state="yellow"] { background: var(--t-yellow); }
+.pw-flag[data-state="red"]    { background: var(--t-red); }
+.pw-flag[data-state="idle"]   { background: var(--pw-line-bright); }
+.pw-flag[data-state="chequered"] {
+  background: repeating-conic-gradient(#fff 0 25%, #000 0 50%) 0 0 / 8px 8px;
+}
+
+.pw-slot {
+  padding: 10px 16px;
+  border-right: 1px solid var(--pw-line);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pw-slot-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pw-bright);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pw-lap-count {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--pw-bright);
+  line-height: 1;
+}
+.pw-lap-total {
+  font-size: 14px;
+  color: var(--pw-dim);
+  font-weight: 400;
+}
+
+.pw-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+}
+
+.pw-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--pw-line-bright);
+  background: var(--pw-panel-alt);
+  color: var(--pw-text);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.pw-btn:hover:not(:disabled) {
+  background: var(--pw-line);
+  border-color: var(--pw-dim);
+}
+.pw-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pw-btn:focus-visible { outline: 2px solid var(--t-green); outline-offset: 1px; }
+.pw-btn[data-variant="go"]   { border-color: var(--t-green); color: var(--t-green); }
+.pw-btn[data-variant="stop"] { border-color: var(--t-red); color: var(--t-red); }
+
+.pw-select {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 10px;
+  background: var(--pw-panel-alt);
+  color: var(--pw-text);
+  border: 1px solid var(--pw-line-bright);
+  cursor: pointer;
+}
+.pw-select:focus-visible { outline: 2px solid var(--t-green); outline-offset: 1px; }
+
+/* --- Gap ribbon (signature) --------------------------------------------- */
+
+.pw-ribbon {
+  position: relative;
+  height: 74px;
+  background: var(--pw-panel-alt);
+  border-bottom: 1px solid var(--pw-line);
+  overflow: hidden;
+}
+
+.pw-ribbon-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    to right,
+    var(--pw-line) 0 1px,
+    transparent 1px 100%
+  );
+  background-size: 10% 100%;
+  opacity: 0.55;
+}
+
+.pw-car {
+  position: absolute;
+  top: 14px;
+  width: 3px;
+  height: 26px;
+  transform: translateX(-50%);
+  transition: left 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pw-car::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 8px currentColor;
+  opacity: 0.7;
+}
+.pw-car[data-leader="true"] { height: 34px; top: 10px; width: 4px; }
+
+.pw-car-tag {
+  position: absolute;
+  top: 46px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--pw-dim);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  transition: left 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pw-ribbon-axis {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 8px;
+  color: var(--pw-dim);
+  letter-spacing: 0.08em;
+}
+
+/* --- Timing tower ------------------------------------------------------- */
+
+.pw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.pw-table thead th {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pw-dim);
+  font-weight: 500;
+  padding: 8px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--pw-line-bright);
+  background: var(--pw-panel);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.pw-table thead th[data-align="left"] { text-align: left; }
+
+.pw-table tbody tr {
+  border-bottom: 1px solid var(--pw-line);
+  transition: background 120ms;
+}
+.pw-table tbody tr:hover { background: var(--pw-panel-alt); }
+.pw-table tbody tr[data-pit="true"] { opacity: 0.55; }
+
+.pw-table td {
+  padding: 5px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+.pw-table td[data-align="left"] { text-align: left; }
+
+.pw-pos {
+  font-weight: 700;
+  color: var(--pw-bright);
+  width: 34px;
+}
+
+.pw-driver {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.pw-team-bar {
+  width: 3px;
+  height: 15px;
+  flex: none;
+}
+.pw-code {
+  font-weight: 700;
+  color: var(--pw-bright);
+  letter-spacing: 0.03em;
+}
+.pw-team-name {
+  font-size: 10px;
+  color: var(--pw-dim);
+}
+
+.pw-time { color: var(--pw-text); }
+.pw-time[data-flag="session"]  { color: var(--t-purple); font-weight: 600; }
+.pw-time[data-flag="personal"] { color: var(--t-green); }
+
+/* Sector blocks: the most characteristic artifact of an F1 timing screen. */
+.pw-sectors {
+  display: inline-flex;
+  gap: 3px;
+  justify-content: flex-end;
+}
+.pw-sector {
+  width: 17px;
+  height: 4px;
+  background: var(--pw-line-bright);
+}
+.pw-sector[data-flag="session"]  { background: var(--t-purple); }
+.pw-sector[data-flag="personal"] { background: var(--t-green); }
+.pw-sector[data-flag="slower"]   { background: var(--t-yellow); }
+
+.pw-tyre {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.pw-compound {
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  line-height: 17px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1.5px solid var(--pw-dim);
+  color: var(--pw-dim);
+}
+.pw-compound[data-c="SOFT"]         { border-color: var(--t-red);    color: var(--t-red); }
+.pw-compound[data-c="MEDIUM"]       { border-color: var(--t-yellow); color: var(--t-yellow); }
+.pw-compound[data-c="HARD"]         { border-color: #e8eef4;         color: #e8eef4; }
+.pw-compound[data-c="INTERMEDIATE"] { border-color: var(--t-green);  color: var(--t-green); }
+.pw-compound[data-c="WET"]          { border-color: #2f9fff;         color: #2f9fff; }
+
+.pw-age { font-size: 10px; color: var(--pw-dim); }
+
+.pw-pit-tag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--t-yellow);
+  border: 1px solid var(--t-yellow);
+  padding: 0 4px;
+}
+
+.pw-empty {
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--pw-dim);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+/* --- Progress ----------------------------------------------------------- */
+
+.pw-progress {
+  height: 2px;
+  background: var(--pw-line);
+  position: relative;
+  overflow: hidden;
+}
+.pw-progress-fill {
+  height: 100%;
+  background: var(--t-green);
+  transition: width 600ms linear;
+}
+
+.pw-live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--t-red);
+  border-radius: 50%;
+  animation: pw-pulse 1.4s ease-in-out infinite;
+}
+@keyframes pw-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-live-dot { animation: none; }
+  .pw-car, .pw-car-tag, .pw-progress-fill { transition: none; }
+}
+
+@media (max-width: 720px) {
+  .pw-hide-sm { display: none; }
+  .pw-table { font-size: 11px; }
+  .pw-table td, .pw-table thead th { padding: 5px 6px; }
+}
