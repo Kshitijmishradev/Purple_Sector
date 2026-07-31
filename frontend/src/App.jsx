@@ -8,6 +8,7 @@ import TechnicalPage from "./features/technical/TechnicalPage";
 import CalenderPage from "./features/calender/CalenderPage";
 import TelemetryPage from "./features/telemetry/TelemetryPage";
 import LivePage from "./features/live/LivePage";
+import LandingPage from "./features/landing/LandingPage";
 
 import { useEffect } from "react";
 import axios from "axios";
@@ -22,7 +23,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FlagIcon } from "lucide-react";
 
-function App() {
+function AppShell() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [gp, setGp] = useState(null);
   const [availableGPs, setAvailableGPs] = useState([]);
@@ -109,7 +110,6 @@ function App() {
       />
       <main className="mx-auto max-w-[1600px] px-4 pb-10 pt-28 sm:px-6 sm:pt-32">
         <Routes>
-          <Route path="/" element={<Navigate to="/lap-times" replace />} />
           <Route
             path="/lap-times"
             element={renderPage(
@@ -178,6 +178,15 @@ function App() {
         </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/*" element={<AppShell />} />
+    </Routes>
   );
 }
 

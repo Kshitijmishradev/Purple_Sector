@@ -1,0 +1,51 @@
+/* ==========================================================================
+   Purple Sector — design tokens
+
+   One palette for the whole product, derived from FIA timing convention
+   rather than picked for looks. Purple means fastest in session, green means
+   personal best, yellow means slower, red means stopped. Because those four
+   already carry meaning to the audience, nothing else on screen needs to be
+   coloured — every other hue is a team colour arriving from data.
+   ========================================================================== */
+
+:root {
+  /* Surfaces — near-black with a blue cast, like a timing monitor rather
+     than a generic dark theme. */
+  --ps-void: #06080b;
+  --ps-panel: #0b1016;
+  --ps-panel-2: #0e141c;
+  --ps-line: #1a2430;
+  --ps-line-2: #27374a;
+
+  /* Text */
+  --ps-dim: #56687b;
+  --ps-text: #c7d5e3;
+  --ps-bright: #f2f7fc;
+
+  /* Timing semantics — never decorative */
+  --ps-purple: #b14cff;
+  --ps-green: #00d46a;
+  --ps-yellow: #ffd024;
+  --ps-red: #ff2d3c;
+
+  /* Type */
+  --ps-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --ps-display: "Space Grotesk", system-ui, sans-serif;
+
+  /* Instruments are square. Radius is reserved for genuinely soft UI. */
+  --ps-radius: 0px;
+}
+
+/* Utility used across marketing + app chrome */
+.ps-eyebrow {
+  font-family: var(--ps-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ps-dim);
+}
+
+.ps-focusable:focus-visible {
+  outline: 2px solid var(--ps-purple);
+  outline-offset: 2px;
+}
