@@ -4,24 +4,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#13131b",
-        surface: "#13131b",
-        "surface-container": "#1f1f28",
-        "surface-container-high": "#292933",
-        "surface-container-highest": "#34343e",
-        "surface-container-lowest": "#0d0d16",
-        primary: "#ffb4a7",
-        "primary-container": "#ff553d",
-        "on-primary": "#670400",
-        "on-surface": "#e4e1ee",
-        "on-surface-variant": "#eabcb4",
-        outline: "#b08780",
-        racing: "#e10600",
+        // NOTE: background / primary / surface-* deliberately removed. They
+        // were Material leftovers that shadowed shadcn's own tokens, which is
+        // why bg-primary was rendering peach. Those names now resolve to the
+        // CSS variables in index.css.
+        racing: "#ff2d3c",
+        outline: "#27374a",
+
+        // Timing semantics
+        fastest: "#b14cff",
+        personal: "#00d46a",
+        slower: "#ffd024",
+
+        // Tyre compounds, straight from the FIA sidewall colours
+        soft: "#ff2d3c",
+        medium: "#ffd024",
+        hard: "#e8eef4",
+        intermediate: "#00d46a",
+        wet: "#2f9fff",
       },
       fontFamily: {
         headline: ["Space Grotesk", "sans-serif"],
         body: ["Inter", "sans-serif"],
-        label: ["Inter", "sans-serif"],
+        label: ["IBM Plex Mono", "monospace"],
+        mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
       },
     },
   },

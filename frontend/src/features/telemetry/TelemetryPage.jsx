@@ -136,10 +136,10 @@ function TrackMap({ laps }) {
       <CardContent>
         <div className="relative aspect-[1.55/1] w-full rounded-lg bg-muted/30 ring-1 ring-border/60">
           <div
-            className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10rem] font-black uppercase tracking-[0.3em] text-foreground/[0.04]"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center text-[4rem] font-black uppercase tracking-[0.28em] text-foreground/[0.04]"
             aria-hidden
           >
-            KIDŌ
+            PURPLE SECTOR
           </div>
           <svg
             viewBox="0 0 100 100"
@@ -559,7 +559,7 @@ const TelemetryPage = ({ year, gp }) => {
                 className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl font-black uppercase text-foreground/[0.05]"
                 aria-hidden
               >
-                KIDŌ
+                PURPLE SECTOR
               </div>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart

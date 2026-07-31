@@ -5,80 +5,72 @@
 
 @config "../tailwind.config.js";
 
-:root {
-  --font-sans: "Geist Variable", sans-serif;
-  --font-headline: "Space Grotesk", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+/* ==========================================================================
+   Purple Sector — application theme
 
+   Colour is semantic, not decorative. Purple is fastest in session, green is
+   a personal best, yellow is slower, red is stopped or a red flag. Those four
+   already mean something to the audience, so nothing else is coloured — every
+   remaining hue on screen is a team colour arriving from data.
+
+   Light and dark are deliberately identical: a timing screen is dark, and
+   keeping both in sync means dropping the .dark class can never flash white.
+   ========================================================================== */
+
+:root,
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Type */
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-headline: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Instruments are square. */
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* Surfaces — near-black with a blue cast, like a timing monitor */
+  --background: #06080b;
+  --foreground: #c7d5e3;
+  --card: #0b1016;
+  --card-foreground: #e8f0f8;
+  --popover: #0e141c;
+  --popover-foreground: #e8f0f8;
+
+  /* Brand */
+  --primary: #b14cff;
+  --primary-foreground: #0a0510;
+
+  --secondary: #131c26;
+  --secondary-foreground: #c7d5e3;
+  --muted: #111922;
+  --muted-foreground: #56687b;
+  --accent: #16202c;
+  --accent-foreground: #f2f7fc;
+  --destructive: #ff2d3c;
+
+  --border: #1a2430;
+  --input: #27374a;
+  --ring: #b14cff;
+
+  /* Charts — distinguishable on near-black, and none of them accidental */
+  --chart-1: #b14cff;
+  --chart-2: #00d46a;
+  --chart-3: #ffd024;
+  --chart-4: #33c5ff;
+  --chart-5: #ff7a3d;
+
+  --sidebar: #0b1016;
+  --sidebar-foreground: #c7d5e3;
+  --sidebar-primary: #b14cff;
+  --sidebar-primary-foreground: #0a0510;
+  --sidebar-accent: #16202c;
+  --sidebar-accent-foreground: #f2f7fc;
+  --sidebar-border: #1a2430;
+  --sidebar-ring: #b14cff;
 }
 
 @theme inline {
@@ -123,45 +115,87 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
     margin: 0;
     min-height: 100vh;
-    font-size: 16px;
-    letter-spacing: 0.005em;
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: 0;
+    /* Digits keep a fixed width, so a lap time updating from 1:23.9 to
+       1:24.0 doesn't shift the column. Non-negotiable on a timing screen. */
+    font-variant-numeric: tabular-nums;
   }
+
   html {
     @apply font-sans;
+    color-scheme: dark;
   }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-headline);
-    font-weight: 800;
-    letter-spacing: 0.02em;
+    font-weight: 700;
+    /* Space Grotesk at display sizes wants negative tracking, not positive.
+       The previous +0.02em was making headings look loose and unset. */
+    letter-spacing: -0.02em;
     @apply text-foreground;
     margin-top: 0;
   }
+
+  /* Tabular data reads as an instrument, not a document. */
+  table, th, td {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 500;
+    @apply text-muted-foreground;
+  }
+
   a {
     @apply text-primary transition-colors;
     text-decoration: none;
   }
-  a:hover {
-    @apply text-primary/80;
-  }
+  a:hover { @apply text-primary/80; }
+
   ::selection {
-    @apply bg-primary text-primary-foreground;
+    background: var(--primary);
+    color: var(--primary-foreground);
   }
-  ::-webkit-scrollbar {
-    width: 6px;
+
+  /* A purple scrollbar is loud. Keep the chrome quiet so the data isn't
+     competing with the furniture. */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--background); }
+  ::-webkit-scrollbar-thumb { background: var(--input); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+}
+
+@layer components {
+  /* Small uppercase caption used above values throughout the app. */
+  .ps-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    @apply text-muted-foreground;
   }
-  ::-webkit-scrollbar-track {
-    @apply bg-muted;
+
+  /* Any number that should read as an instrument value. */
+  .ps-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    @apply text-card-foreground;
   }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-primary rounded-full;
-  }
+
+  /* FIA timing semantics, available to every page. */
+  .ps-fastest  { color: var(--chart-1); }
+  .ps-personal { color: var(--chart-2); }
+  .ps-slower   { color: var(--chart-3); }
 }
