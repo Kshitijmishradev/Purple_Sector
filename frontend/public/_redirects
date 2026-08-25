@@ -1,0 +1,3 @@
+# react-router owns the routes; without this a refresh on /live or /telemetry
+# asks the host for a file that does not exist and gets a 404.
+/*  /index.html  200

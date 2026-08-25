@@ -75,10 +75,19 @@ jobs:
 
       # Pushing to the Space remote is what triggers a rebuild and, on boot,
       # cache.seed_from_disk() picking up the new payloads.
+      #
+      # A Space reads its configuration from YAML frontmatter in README.md,
+      # which would render as a stray table on GitHub. So the Space's README
+      # is swapped in on a throwaway commit that is pushed to Hugging Face and
+      # never lands on a branch here.
       - name: Publish to Hugging Face Space
         if: steps.commit.outputs.changed == 'true' && env.HF_TOKEN != ''
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE: ${{ vars.HF_SPACE }}
         run: |
+          cp deploy/README.hf.md README.md
+          git add README.md
+          git commit -m "deploy: Space metadata"
           git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" HEAD:main
+          git reset --hard HEAD~1
