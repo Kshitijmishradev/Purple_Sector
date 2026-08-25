@@ -133,21 +133,69 @@ Then open **Race Replay** in the app, or watch the raw stream:
 docker compose exec redpanda rpk topic consume f1.timing
 ```
 
+Locally the backend computes any season on demand, so there is nothing to set
+up. The deployed build instead ships a precomputed 2026 season and refreshes it
+weekly; to build that bundle yourself:
+
+```bash
+python scripts/prewarm.py --all
+```
+
 ---
 
 ## Measured, not claimed
 
-Caching a full race analytics payload behind Redis with a distributed
-compute lock (so concurrent cold requests never duplicate a multi-second
-pandas job):
+All figures below are from the 2026 season on an M-series Mac, with FastF1's
+download cache already warm — a genuinely cold session adds ~5s of network on
+top.
+
+**The cache.** Analytics payloads sit behind Redis with a distributed compute
+lock, so concurrent cold requests never duplicate the same pandas job:
 
 | | |
 |---|---|
-| Uncached (cold FastF1 + pandas) | ~1.3s |
-| Cached (Redis hit) | **~69ms** |
+| Uncached (pandas) | ~1.0s |
+| Cached (Redis hit) | **~40ms** |
+
+**Where the cost actually is.** Not where you would guess — the replay feed is
+cheap, and `telemetry=True` is what hurts:
+
+| Path | Time | Peak RSS | Stored |
+|---|---|---|---|
+| `analytics` — the replay source | 1.0s | 125 MB | 54 KB |
+| `insights` / `meta` / `lap-matrix` | ~2s | — | ~10 KB |
+| `track-intel` | 13.2s | — | 0.1 KB |
+| `lap-compare` telemetry | 32.4s | **621 MB** | 76 KB |
+
+That gap is the reason the deployed build precomputes everything except the
+combinatorial telemetry endpoints and ships it in the repo — the whole 2026
+season is about 1.6 MB, and the serving container never loads a FastF1
+session. It runs in **344 MB** all in, of which Redpanda is 267 MB and the API
+127 MB, most of that just importing pandas.
+
+**The replay stream.** A race is ~1300 events. The consumer used to broadcast
+the entire field on every one of them; it now coalesces to a fixed rate:
+
+| | Frames | Payload |
+|---|---|---|
+| Per event | 1321 | 14.5 MB |
+| Coalesced (5 Hz) | **137** | **1.5 MB** |
+
+The final classification is identical either way — verified by diffing the last
+standings frame from both. Note those are decompressed sizes: `permessage-deflate`
+squeezes a standings frame about 5.3×, so real egress is nearer 290 KB.
+
+**One number worth the detour.** Reconstructing the replay clock by
+accumulating lap durations looks reasonable and is badly wrong. Laps with no
+recorded `LapTime` are dropped upstream, and only **4 of 22 drivers** finished
+the 2026 British GP with complete timing — accumulation placed one of them 8.5
+minutes ahead of where he actually was, and since standings sort by elapsed
+time, every driver with a gap in their data floated up the timing tower. The
+absolute session clock was in the source data all along.
 
 Full architecture notes, including why the lock uses a token + Lua release
 instead of a bare `DEL`, are in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+Deployment is in [`DEPLOY.md`](DEPLOY.md).
 
 ---
 
