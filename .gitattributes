@@ -1,0 +1,4 @@
+# Prewarmed payloads are zlib streams. Without this git can classify one as
+# text (they occasionally contain no NUL bytes) and a checkout with autocrlf
+# enabled would rewrite line endings inside the compressed data, corrupting it.
+*.zlib binary
