@@ -30,6 +30,91 @@ const PIPELINE = [
   { name: "WebSocket", role: "Standings pushed to the browser as each lap completes." },
 ];
 
+const STORY = [
+  {
+    index: "01",
+    eyebrow: "The race is over",
+    title: "Start with the trace.",
+    body: "A chequered flag ends the broadcast, not the story. Purple Sector takes the finished session apart — every lap, tyre, sector and gap — and keeps the evidence intact.",
+    signal: "DATA / SESSION CLOSED",
+  },
+  {
+    index: "02",
+    eyebrow: "The clock starts again",
+    title: "Put the race back on the clock.",
+    body: "The replay engine turns a completed grand prix into a live timing feed. Kafka carries the laps, the consumer rebuilds the standings, and the browser watches the race unfold again.",
+    signal: "STREAM / REPLAY 10×",
+  },
+  {
+    index: "03",
+    eyebrow: "The race begins to separate",
+    title: "See where the strategy moved.",
+    body: "Stints, compounds, pit windows and gaps become visible as a sequence of decisions. The undercut is no longer a theory — it has a lap, a cost and a shape.",
+    signal: "STRATEGY / STINT 03",
+  },
+  {
+    index: "04",
+    eyebrow: "The tenth is hiding",
+    title: "Find it in the telemetry.",
+    body: "Line up two laps on the same distance axis. Braking, throttle, RPM, gear and speed show the exact corner where time appeared — or disappeared.",
+    signal: "TRACE / DELTA −0.184s",
+  },
+  {
+    index: "05",
+    eyebrow: "One sector turns purple",
+    title: "Every tenth, accounted for.",
+    body: "The finished race is no longer a result on a page. It is a living record you can replay, compare and understand down to the fastest sector.",
+    signal: "RESULT / PURPLE SECTOR",
+  },
+];
+
+function StoryCard({ chapter, index }) {
+  const ref = React.useRef(null);
+  const [visible, setVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <article
+      ref={ref}
+      className={`ps-story-card ${visible ? "is-visible" : ""}`}
+      style={{ "--story-delay": `${index * 100}ms` }}
+    >
+      <div className="ps-story-copy">
+        <span className="ps-story-index">{chapter.index}</span>
+        <span className="ps-eyebrow">{chapter.eyebrow}</span>
+        <h3>{chapter.title}</h3>
+        <p>{chapter.body}</p>
+        <span className="ps-story-signal">{chapter.signal}</span>
+      </div>
+      <div className={`ps-story-art ps-story-art-${index + 1}`} aria-hidden="true">
+        <span className="ps-art-orbit" />
+        <span className="ps-art-track" />
+        <span className="ps-art-track ps-art-track-secondary" />
+        <span className="ps-art-marker" />
+        <span className="ps-art-pastel" />
+      </div>
+    </article>
+  );
+}
+
 export default function LandingPage() {
   return (
     <div className="ps-landing">
@@ -42,6 +127,9 @@ export default function LandingPage() {
           <Link to="/lap-times" className="ps-btn">
             Open the app
           </Link>
+          <Link to="/docs" className="ps-btn">
+            Read the docs
+          </Link>
         </div>
       </nav>
 
@@ -49,13 +137,12 @@ export default function LandingPage() {
         <div className="ps-wrap">
           <span className="ps-eyebrow">Formula 1 race analytics</span>
           <h1>
-            Every tenth, <em>accounted for</em>.
+            Chase the <em>lost tenth</em>.
           </h1>
           <p>
-            Lap-by-lap analysis of every Formula 1 session since 2018 — tyre
-            strategy, sector deltas, pit windows and full car telemetry. Plus a
-            replay engine that streams a finished race back through a live
-            timing pipeline, so you can watch it unfold on any day of the year.
+            A finished race is only the beginning. Rewind the session, watch it
+            move through a live timing pipeline, then follow the data into the
+            corner where the fastest sector was made.
           </p>
           <div className="ps-hero-actions">
             <Link to="/live" className="ps-btn" data-variant="primary">
@@ -72,9 +159,25 @@ export default function LandingPage() {
         </div>
       </header>
 
+      <section className="ps-story" aria-labelledby="story-heading">
+        <div className="ps-wrap">
+          <span className="ps-eyebrow">A race, reconstructed</span>
+          <h2 id="story-heading">Every lap leaves a trace.</h2>
+          <p className="ps-section-lede">
+            Purple Sector follows the race after the flag falls — from raw
+            timing data to a replay you can inspect, interrupt and understand.
+          </p>
+          <div className="ps-story-list">
+            {STORY.map((chapter, index) => (
+              <StoryCard key={chapter.index} chapter={chapter} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="ps-section">
         <div className="ps-wrap">
-          <span className="ps-eyebrow">What you get</span>
+          <span className="ps-eyebrow">Inside the trace</span>
           <h2>Built for people who already know the sport.</h2>
           <p className="ps-section-lede">
             No explanatory tooltips on what an undercut is. Dense tables,
