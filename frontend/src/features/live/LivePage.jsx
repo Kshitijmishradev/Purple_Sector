@@ -3,13 +3,14 @@ import axios from "axios";
 
 import { API_URL } from "@/lib/api";
 import { useLiveStream } from "./useLiveStream";
+import { useDemoReplay } from "./useDemoReplay";
 import { GapRibbon } from "./GapRibbon";
 import { TimingTower, formatLapTime } from "./TimingTower";
 import "./pitwall.css";
 
 const SPEEDS = [1, 5, 10, 30, 60];
 
-export default function LivePage({ year, gp }) {
+function FullLivePage({ year, gp }) {
   const {
     status,
     standings,
@@ -176,4 +177,64 @@ export default function LivePage({ year, gp }) {
       )}
     </div>
   );
+}
+
+function DemoLivePage({ year, gp }) {
+  const replay = useDemoReplay(year, gp);
+  const flagState = replay.finished ? "chequered" : replay.running ? "green" : "idle";
+  const progress = replay.totalEvents > 0 ? Math.round((replay.sent / replay.totalEvents) * 100) : 0;
+
+  return (
+    <div className="pw">
+      <header className="pw-header">
+        <div className="pw-flag" data-state={flagState} />
+        <div className="pw-slot" style={{ minWidth: 190 }}>
+          <span className="pw-label">Session</span>
+          <span className="pw-slot-value">{replay.meta?.event_name ?? gp ?? "No race selected"}</span>
+        </div>
+        <div className="pw-slot">
+          <span className="pw-label">Lap</span>
+          <span className="pw-lap-count">{replay.lap ?? 0}<span className="pw-lap-total">/{replay.totalLaps ?? "—"}</span></span>
+        </div>
+        <div className="pw-slot pw-hide-sm">
+          <span className="pw-label">Fastest lap</span>
+          <span className="pw-slot-value" style={{ color: "var(--t-purple)" }}>
+            {formatLapTime(replay.sessionBestLap)} {replay.sessionBestDriver && <span style={{ color: "var(--pw-dim)", fontSize: 11 }}>{replay.sessionBestDriver}</span>}
+          </span>
+        </div>
+        <div className="pw-slot pw-hide-sm">
+          <span className="pw-label">Feed</span>
+          <span className="pw-slot-value" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {replay.running && <span className="pw-live-dot" />}
+            <span style={{ fontSize: 12 }}>{replay.status === "demo" ? "MVP DEMO" : replay.status.toUpperCase()}</span>
+          </span>
+        </div>
+        <div className="pw-controls">
+          <select className="pw-select" value={replay.speed} disabled={replay.running} aria-label="Replay speed" onChange={(event) => replay.setSpeed(Number(event.target.value))}>
+            {SPEEDS.map((speed) => <option key={speed} value={speed}>{speed}× speed</option>)}
+          </select>
+          {replay.running ? (
+            <button className="pw-btn" data-variant="stop" onClick={replay.stop}>Stop</button>
+          ) : (
+            <button className="pw-btn" data-variant="go" onClick={replay.start} disabled={!gp || replay.status === "loading"}>Start replay</button>
+          )}
+        </div>
+      </header>
+      <div className="pw-progress"><div className="pw-progress-fill" style={{ width: `${progress}%` }} /></div>
+      <div className="pw-empty" style={{ color: "var(--pw-dim)", padding: "10px 16px" }}>
+        Client-side MVP demo · precomputed race data · no live backend stream
+      </div>
+      {replay.error && <div className="pw-empty" style={{ color: "var(--t-red)", padding: "14px 16px" }}>{replay.error}</div>}
+      {replay.standings.length > 0 && <GapRibbon standings={replay.standings} />}
+      {replay.standings.length === 0 ? (
+        <div className="pw-empty">{replay.running ? "Replaying the bundled timing feed" : "Press start replay to play the bundled race data"}</div>
+      ) : (
+        <TimingTower standings={replay.standings} />
+      )}
+    </div>
+  );
+}
+
+export default function LivePage(props) {
+  return import.meta.env.VITE_DEMO_MODE === "true" ? <DemoLivePage {...props} /> : <FullLivePage {...props} />;
 }
