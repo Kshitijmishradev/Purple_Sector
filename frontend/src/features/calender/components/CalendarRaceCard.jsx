@@ -17,16 +17,20 @@ const statusLabels = {
 
 const CalendarRaceCard = ({ event, isActive, onClick }) => {
   const status = getRaceStatus(event);
+  const supported = event.mvp_supported !== false;
 
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={cn(
-        "w-full rounded-lg border-l-4 p-4 text-left transition-all",
+        onClick={onClick}
+        aria-label={`${event.EventName || "Race"}${supported ? " MVP data available" : " schedule only"}`}
+        className={cn(
+        "w-full rounded-lg border-l-4 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary",
         isActive
           ? "border-racing bg-card ring-1 ring-racing/30"
-          : "border-border/80 bg-card/60 hover:border-racing/70 hover:bg-card",
+          : supported
+            ? "border-border/80 bg-card/60 hover:border-racing/70 hover:bg-card"
+            : "border-border/50 bg-card/30 opacity-75 hover:border-primary/50 hover:bg-card/60",
       )}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -40,7 +44,7 @@ const CalendarRaceCard = ({ event, isActive, onClick }) => {
             statusClass[status],
           )}
         >
-          {statusLabels[status]}
+          {supported ? statusLabels[status] : "Schedule only"}
         </Badge>
       </div>
 
@@ -55,7 +59,7 @@ const CalendarRaceCard = ({ event, isActive, onClick }) => {
       <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
         <span>{formatEventWindow(event)}</span>
         <span className="font-bold uppercase">
-          {event.EventFormat || "Race"}
+        {supported ? event.EventFormat || "Race" : "MVP data unavailable"}
         </span>
       </div>
     </button>
