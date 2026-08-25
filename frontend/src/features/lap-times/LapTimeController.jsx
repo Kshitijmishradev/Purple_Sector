@@ -3,23 +3,43 @@ import { useRaceMeta, useRaceAnalytics } from "../../hooks/useRaceData";
 import DriverPanel from "../../components/DriverPanel";
 import PaceChart from "./PaceChart";
 import GapChart from "./GapChart";
+import RaceAnalyticsDashboard from "./RaceAnalyticsDashboard";
 import FastestLapCard from "../../components/FastestLapCard";
 import RaceWinnerCard from "../../components/RaceWinnerCard";
 import { useWorkerizedData } from "./useWorkerizedData";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Pace and gaps have purpose-built, workerized charts here. Every other
+// section is implemented in RaceAnalyticsDashboard, so this component renders
+// the two it owns and delegates the rest rather than duplicating them.
+const OWN_SECTIONS = ["lap-times", "gaps"];
+
 const LapTimeController = ({
   year,
   gp,
   selectedDrivers,
   onSelectionChange,
+  visibleSections = OWN_SECTIONS,
 }) => {
   const meta = useRaceMeta(year, gp);
   const analytics = useRaceAnalytics(year, gp);
 
   const allDrivers = useMemo(() => meta.data?.drivers || [], [meta.data]);
   const driversToShow = selectedDrivers;
+
+  const visible = useMemo(
+    () => new Set(visibleSections),
+    [visibleSections],
+  );
+  const showPace = visible.has("lap-times");
+  const showGaps = visible.has("gaps");
+
+  // Whatever this component does not draw itself goes to the dashboard.
+  const delegated = useMemo(
+    () => visibleSections.filter((s) => !OWN_SECTIONS.includes(s)),
+    [visibleSections],
+  );
 
   const gapSeries =
     useWorkerizedData(
@@ -29,6 +49,7 @@ const LapTimeController = ({
         selectedDrivers: driversToShow,
       },
       [analytics.data, driversToShow],
+      showGaps,
     ) || [];
 
   const paceChartData =
@@ -40,6 +61,7 @@ const LapTimeController = ({
         mode: "per-lap",
       },
       [analytics.data, driversToShow],
+      showPace,
     )?.chartData || [];
 
   const globalFastest = analytics.data?.lap_times_and_splits?.global_fastest;
@@ -102,10 +124,25 @@ const LapTimeController = ({
         </div>
       )}
 
-      <div className="space-y-8">
-        <PaceChart data={paceChartData} selectedDrivers={driversToShow} />
-        <GapChart data={gapSeries} selectedDrivers={driversToShow} />
-      </div>
+      {(showPace || showGaps) && (
+        <div className="space-y-8">
+          {showPace && (
+            <PaceChart data={paceChartData} selectedDrivers={driversToShow} />
+          )}
+          {showGaps && (
+            <GapChart data={gapSeries} selectedDrivers={driversToShow} />
+          )}
+        </div>
+      )}
+
+      {delegated.length > 0 && (
+        <RaceAnalyticsDashboard
+          analytics={analytics.data}
+          selectedDrivers={driversToShow}
+          allDrivers={allDrivers}
+          visibleSections={delegated}
+        />
+      )}
     </div>
   );
 };

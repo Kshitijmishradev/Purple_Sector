@@ -17,6 +17,9 @@ const navLinks = [
   { to: "/telemetry", label: "Telemetry" },
   { to: "/strategy", label: "Drivers" },
   { to: "/technical", label: "Teams" },
+  // The route existed but was never linked, so the race-control timeline --
+  // flags, safety cars, stewards' investigations -- was unreachable.
+  { to: "/race-control", label: "Race Control" },
   { to: "/calender", label: "Calendar" },
 ];
 
