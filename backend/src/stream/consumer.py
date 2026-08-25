@@ -201,39 +201,78 @@ async def consume() -> None:
 
     logger.info("Consuming %s as group %s", settings.kafka_topic, settings.kafka_group)
 
+    # Coalesce standings frames. Applying an event is cheap; broadcasting the
+    # whole field is not, and at 200x a replay produces events far faster than
+    # any UI can use. So events update state immediately and a separate pump
+    # publishes the latest snapshot at a fixed rate. What viewers see is
+    # identical; what crosses the network is ~5x smaller.
+    dirty = asyncio.Event()
+    latest: Dict[str, Any] = {"lap": None, "partition": None}
+    interval = 1.0 / max(settings.publish_hz, 0.1)
+
+    async def publish_standings() -> None:
+        await bus.publish(
+            {
+                "type": "standings",
+                "lap": latest["lap"],
+                "total_laps": state.meta.get("total_laps"),
+                "partition": latest["partition"],
+                "session_best_lap": state.session_best_lap,
+                "session_best_driver": state.session_best_driver,
+                "session_best_sectors": state.session_best_sectors,
+                "standings": state.standings(),
+            }
+        )
+
+    async def pump() -> None:
+        while True:
+            await dirty.wait()
+            dirty.clear()
+            await publish_standings()
+            await asyncio.sleep(interval)
+
+    pump_task = asyncio.create_task(pump())
+    frames = 0
+
     try:
         async for message in consumer:
             event = message.value
             kind = event.get("type")
 
             if kind == "session_start":
+                dirty.clear()
                 state.reset(event.get("meta") or {})
+                latest.update(lap=None, partition=None)
                 await bus.publish({"type": "session_start", "meta": state.meta})
                 logger.info("Session start: %s", state.meta.get("event_name"))
                 continue
 
             if kind == "session_end":
+                # Publish unconditionally rather than only when dirty: the
+                # pump may have just consumed the flag and be mid-sleep, and
+                # the final classification is the one frame that must land.
+                dirty.clear()
+                await publish_standings()
                 await bus.publish({"type": "session_end"})
-                logger.info("Session end")
+                logger.info("Session end (%d frames published)", frames)
+                frames = 0
                 continue
 
             if kind != "lap":
                 continue
 
             state.apply(event)
-            await bus.publish(
-                {
-                    "type": "standings",
-                    "lap": event.get("lap"),
-                    "total_laps": state.meta.get("total_laps"),
-                    "partition": message.partition,
-                    "session_best_lap": state.session_best_lap,
-                    "session_best_driver": state.session_best_driver,
-                    "session_best_sectors": state.session_best_sectors,
-                    "standings": state.standings(),
-                }
-            )
+            latest["lap"] = event.get("lap")
+            latest["partition"] = message.partition
+            if not dirty.is_set():
+                frames += 1
+            dirty.set()
     finally:
+        pump_task.cancel()
+        try:
+            await pump_task
+        except asyncio.CancelledError:
+            pass
         await consumer.stop()
         await bus.close()
 

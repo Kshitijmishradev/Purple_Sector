@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     kafka_topic: str = "f1.timing"
     kafka_group: str = "gridlogic-live"
 
+    # Standings frames pushed to browsers per second. Each frame is the whole
+    # field (~11KB), and a replay emits an event per driver per lap, so
+    # publishing one frame per event sends ~14MB to every viewer over a race.
+    # Coalescing to a fixed rate costs nothing visually -- the tower cannot
+    # usefully redraw faster than this -- and cuts that by roughly 5x.
+    publish_hz: float = 5.0
+
     # --- FastF1 ---
     fastf1_cache_dir: str = "data_cache"
 
