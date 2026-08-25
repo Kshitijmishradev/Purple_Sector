@@ -33,9 +33,6 @@ Kafka / Redpanda ──▶ stateful consumer ──▶ Redis pub/sub ──▶ W
  ordering)
 ```
 
-Full write-up of both the caching layer and the streaming pipeline is in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
-
 ---
 
 ## Screenshots
@@ -192,10 +189,6 @@ the 2026 British GP with complete timing — accumulation placed one of them 8.5
 minutes ahead of where he actually was, and since standings sort by elapsed
 time, every driver with a gap in their data floated up the timing tower. The
 absolute session clock was in the source data all along.
-
-Full architecture notes, including why the lock uses a token + Lua release
-instead of a bare `DEL`, are in [`ARCHITECTURE.md`](ARCHITECTURE.md).
-Deployment is in [`DEPLOY.md`](DEPLOY.md).
 
 ---
 
