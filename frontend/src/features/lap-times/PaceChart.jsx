@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { getDriverColor } from "../../theme/f1Colors";
+import { getDriverColor } from "../../theme/f1colors";
 
 const PaceChart = ({ data, selectedDrivers }) => {
   if (!selectedDrivers?.length) {

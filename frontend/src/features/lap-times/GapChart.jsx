@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { getDriverColor } from "../../theme/f1Colors";
+import { getDriverColor } from "../../theme/f1colors";
 
 const GapChart = ({ data, selectedDrivers }) => {
   if (!selectedDrivers?.length) {
