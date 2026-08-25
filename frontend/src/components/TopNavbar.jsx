@@ -20,10 +20,18 @@ const navLinks = [
   { to: "/calender", label: "Calendar" },
 ];
 
-// The deployed build ships a precomputed 2026 season (backend/prewarmed) and
-// never computes a race on demand, so offering earlier years would just serve
-// 404s. Add a year here only once it has been prewarmed.
-const years = [2026];
+// Local dev talks to a backend that can compute any season on demand, so it
+// offers the full range. The deployed build ships only a precomputed 2026
+// season and sets VITE_SEASONS=2026, because offering a year it cannot serve
+// is worse than not offering it. Configuration, not a code change, so the two
+// environments do not drift.
+const ALL_SEASONS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
+const years = import.meta.env.VITE_SEASONS
+  ? import.meta.env.VITE_SEASONS.split(",")
+      .map((y) => Number(y.trim()))
+      .filter(Number.isFinite)
+  : ALL_SEASONS;
 
 /* Instrument dropdown: square, hairline border, mono value, no gradient. */
 const triggerClass = cn(
