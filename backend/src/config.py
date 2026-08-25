@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # Bump this whenever a _build_*_payload changes shape. Every old key
     # becomes unreachable instantly, so a deploy can never serve a stale
     # schema to a new frontend. Cheaper and safer than manual invalidation.
-    cache_version: str = "v1"
+    cache_version: str = "v2"
 
     # Seconds a worker may hold the compute lock. Must exceed your worst-case
     # FastF1 load or the lock expires mid-compute and a second worker starts.

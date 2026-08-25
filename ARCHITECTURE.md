@@ -55,6 +55,15 @@ POST /replay/{year}/{gp}?speed=10
 Messages are keyed by driver code. Kafka guarantees ordering only *within* a
 partition, so keying by driver is what stops VER's lap 12 arriving before lap 11.
 
+Each event is placed on the clock using `race_time_s`, the absolute session
+time at which the lap was completed. The obvious alternative — accumulating
+lap durations per driver — is wrong in a way that is easy to miss: laps with
+no recorded `LapTime` are dropped upstream, and only 4 of 22 drivers finished
+the 2026 British GP with complete timing. Accumulating put one of them eight
+and a half minutes ahead of where he actually was, and since `standings()`
+orders by elapsed time, drivers with gaps in their data floated to the front
+of the tower.
+
 The consumer is a separate container running in a consumer group. Scale it and
 watch partitions rebalance:
 
@@ -99,6 +108,48 @@ curl -X POST "localhost:8000/replay/2024/Italian%20Grand%20Prix?speed=30"
 rpk group describe gridlogic-live --brokers localhost:19092
 ```
 
+## Precomputed payloads
+
+Measured on the 2026 British GP, warm:
+
+| Path                          | Time   | Peak RSS | Payload (zlib) |
+|-------------------------------|--------|----------|----------------|
+| `analytics` (the replay feed) | 1.0s   | 125 MB   | 54 KB          |
+| `insights` / `meta`           | ~2s    | —        | ~7 KB          |
+| `track-intel`                 | 13.2s  | —        | 0.1 KB         |
+| `lap-compare` telemetry       | 32.4s  | 621 MB   | 76 KB          |
+
+The pandas work is what costs, and `telemetry=True` is what makes it expensive
+— the replay path itself is cheap. So everything except the combinatorial
+telemetry endpoints is computed ahead of time by `scripts/prewarm.py`, on a CI
+runner where 680MB and a few minutes are free, and committed to the repo:
+
+```bash
+python scripts/prewarm.py            # missing rounds + the last two
+python scripts/prewarm.py --all      # required after a CACHE_VERSION bump
+```
+
+`cache.seed_from_disk()` loads the bundle into Redis at startup, so a deployed
+container serves every read from cache and never imports FastF1 at request
+time. The whole 2026 season is around 1.6 MB.
+
+Two things this guards against, both of which are silent failures rather than
+crashes:
+
+- `get_race_analytics` *returns* `{"error": ...}` for a session with no lap
+  data instead of raising. Combined with a `None` TTL for settled races, an
+  unvalidated write would cache that error object permanently. The script
+  validates every payload before writing.
+- Track intel is borrowed from the previous season by event name, which
+  assumes a name means the same venue every year. In 2026 it does not: the
+  Spanish GP moved to Madrid while Barcelona kept a round under a new name.
+  The lookup now matches on location, not name, and reports
+  `unavailable_reason` rather than describing the wrong circuit.
+
+Because the season is live, a scheduled workflow re-runs this weekly, rebuilds
+the two most recent rounds to pick up timing corrections, and pushes — which
+is also what redeploys.
+
 ## Cache invalidation
 
 `CACHE_VERSION` prefixes every key. Bump it whenever a `_build_*_payload`
@@ -110,8 +161,8 @@ Per-race invalidation: `DELETE /cache/{year}/{gp}`.
 ## Known limits
 
 - One replay at a time; this is a demo engine, not a scheduler.
-- Replay timing is reconstructed by accumulating lap times, so it approximates
-  crossing order rather than reproducing the original feed's exact timestamps.
+- The replay engine's state lives in the API process. Run more than one API
+  replica and `/replay/status` will poll a different one than is streaming.
 - The consumer keeps state in memory. Restart it mid-replay and standings
   rebuild from the next message rather than from the start.
 - `auto_offset_reset=latest` means a consumer joining mid-replay sees only new

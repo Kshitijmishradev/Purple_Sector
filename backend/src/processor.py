@@ -78,12 +78,64 @@ class F1DataProcessor:
             "race_winner": winner_payload
         }
 
+    # The schedule's Location label is not stable across seasons: the same
+    # circuit can be "Monaco" one year and "Monte Carlo" the next. These are
+    # the pairs known to be one venue under two labels. Anything not listed
+    # here and not an exact match is treated as a different circuit, because
+    # the failure we are guarding against -- silently describing the wrong
+    # track -- is far worse than declining to describe one at all.
+    _LOCATION_ALIASES = {
+        "monte carlo": "monaco",
+        "yas marina": "yas island",
+    }
+
+    @classmethod
+    def _canonical_place(cls, event) -> tuple:
+        location = str(event.get('Location', '')).strip().lower()
+        country = str(event.get('Country', '')).strip().lower()
+        return cls._LOCATION_ALIASES.get(location, location), country
+
+    def _same_circuit_last_year(self, year: int, gp: str) -> bool:
+        """Does `gp` refer to the same physical circuit in year and year-1?
+
+        Track intel is borrowed from the previous season by event name, which
+        quietly assumes a name always means the same venue. It does not. In
+        2026 the "Spanish Grand Prix" moved to Madrid while Barcelona kept a
+        round under a new name, so a name-only lookup would report Barcelona's
+        circuit length and lap count as Madrid's -- wrong, with no error to
+        notice. Match on location instead, and decline when it does not agree.
+        """
+        try:
+            current = self._canonical_place(fastf1.get_event(year, gp))
+            previous = self._canonical_place(fastf1.get_event(year - 1, gp))
+        except Exception:
+            return False
+
+        return current == previous and all(current)
+
     def get_track_intel(self, year: int, gp: str) -> Dict:
         """
         Fetch static track intel from previous season by default.
         No multi-year fallback is applied.
         """
         source_year = year - 1
+
+        # A new or relocated venue has no comparable session last year. Say so
+        # rather than silently describing a different circuit.
+        if not self._same_circuit_last_year(year, gp):
+            return {
+                "year": year,
+                "gp": gp,
+                "intel_source_year": None,
+                "event_name": gp,
+                "total_laps": None,
+                "circuit_length_km": None,
+                "race_distance_km": None,
+                "unavailable_reason": (
+                    f"{gp} was not run at the same venue in {source_year}"
+                ),
+            }
+
         session = fastf1.get_session(source_year, gp, 'R')
 
         try:
@@ -416,6 +468,11 @@ class F1DataProcessor:
                 rows.append({
                     "lap": int(row['LapNumber']),
                     "lap_time_s": round(float(row['LapTimeSeconds']), 3),
+                    # Absolute session clock. The replay stream needs to know
+                    # *when* a lap was completed, not just how long it took --
+                    # accumulating lap_time_s drifts for any driver whose laps
+                    # were dropped above for a missing LapTime.
+                    "race_time_s": self._safe_float(row.get('RaceTimeSeconds')),
                     "s1_s": round(float(row['S1']), 3) if not pd.isna(row['S1']) else None,
                     "s2_s": round(float(row['S2']), 3) if not pd.isna(row['S2']) else None,
                     "s3_s": round(float(row['S3']), 3) if not pd.isna(row['S3']) else None,

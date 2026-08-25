@@ -18,10 +18,15 @@ from typing import Any, Dict, List, Tuple
 def build_replay_events(analytics: Dict[str, Any]) -> Tuple[Dict, List[Dict]]:
     """Flatten analytics into (meta, events) with events sorted by session time.
 
-    Each driver's laps carry a duration but not an absolute clock, so we
-    accumulate lap_time_s per driver to recover roughly when they crossed the
-    line. Interleaving every driver's crossings and sorting by that cumulative
-    time reproduces the order a live timing feed would have delivered them in.
+    Each lap carries `race_time_s`, the absolute session clock at which it was
+    completed. Interleaving every driver's crossings and sorting by it
+    reproduces the order a live timing feed would have delivered them in.
+
+    Older cached payloads predate that field, so we fall back to accumulating
+    lap_time_s. That fallback is approximate on purpose: laps with no recorded
+    LapTime are dropped upstream, so any driver missing one has their whole
+    subsequent clock shifted earlier and drifts up the order. Prefer the
+    absolute value whenever it is present.
     """
     lap_block = analytics.get("lap_times_and_splits") or {}
     per_driver: Dict[str, List[Dict]] = lap_block.get("drivers") or {}
@@ -42,9 +47,11 @@ def build_replay_events(analytics: Dict[str, Any]) -> Tuple[Dict, List[Dict]]:
             if lap_time is None:
                 continue
             elapsed += float(lap_time)
+            race_time = lap.get("race_time_s")
+            crossed = float(race_time) if race_time is not None else elapsed
             events.append(
                 {
-                    "t": round(elapsed, 3),
+                    "t": round(crossed, 3),
                     "driver": str(code),
                     "lap": lap.get("lap"),
                     "lap_time_s": lap_time,

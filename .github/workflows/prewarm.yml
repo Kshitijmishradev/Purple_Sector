@@ -1,0 +1,84 @@
+name: Prewarm 2026 season
+
+# The 2026 season is live, so the deployed data bundle would go stale within
+# a fortnight if it were built once. This rebuilds it weekly and pushes the
+# result, which is also what redeploys the Space.
+#
+# Runs Tuesday 06:00 UTC: races are Sunday, and the extra day lets the F1 API
+# settle before we bake a payload. prewarm.py additionally re-does the
+# previous round each week to pick up corrections that land after this runs.
+on:
+  schedule:
+    - cron: "0 6 * * 2"
+  workflow_dispatch:
+    inputs:
+      full_rebuild:
+        description: "Rebuild every round (required after a CACHE_VERSION bump)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: prewarm
+  cancel-in-progress: false
+
+jobs:
+  prewarm:
+    runs-on: ubuntu-latest
+    # A full 23-round rebuild with a cold FastF1 cache is the worst case.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      # FastF1 caches raw session downloads on disk. Without this every run
+      # re-downloads every session it touches -- slow, and needlessly hard on
+      # the F1 API for data that is immutable once a race is a week old.
+      - name: Restore FastF1 download cache
+        uses: actions/cache@v4
+        with:
+          path: backend/data_cache
+          key: fastf1-2026-${{ github.run_id }}
+          restore-keys: |
+            fastf1-2026-
+
+      - name: Prewarm
+        run: |
+          if [ "${{ inputs.full_rebuild }}" = "true" ]; then
+            python scripts/prewarm.py --all
+          else
+            python scripts/prewarm.py
+          fi
+
+      - name: Commit updated payloads
+        id: commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/prewarmed
+          if git diff --staged --quiet; then
+            echo "No data changed - nothing to publish"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore: refresh 2026 prewarmed payloads"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pushing to the Space remote is what triggers a rebuild and, on boot,
+      # cache.seed_from_disk() picking up the new payloads.
+      - name: Publish to Hugging Face Space
+        if: steps.commit.outputs.changed == 'true' && env.HF_TOKEN != ''
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" HEAD:main

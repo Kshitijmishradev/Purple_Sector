@@ -22,6 +22,7 @@ import time
 import zlib
 from datetime import date
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Callable, Optional
 from uuid import uuid4
 
@@ -300,6 +301,65 @@ async def cached(
             )
 
     raise ComputationInProgress("Gave up acquiring the compute lock")
+
+
+# --- Seeding --------------------------------------------------------------
+
+PREWARM_DIR = Path(__file__).resolve().parent.parent / "prewarmed"
+
+
+def _filename_to_key(name: str) -> str:
+    """gl__v2__analytics__2026__british-grand-prix.zlib -> gl:v2:analytics:..."""
+    return name[: -len(".zlib")].replace("__", ":")
+
+
+async def seed_from_disk(directory: Optional[Path] = None) -> int:
+    """Load precomputed payloads from disk into Redis at startup.
+
+    These are produced by scripts/prewarm.py on a CI runner, where a 680MB
+    pandas peak is free, and committed to the repo. Seeding them means the
+    deployed container answers every read from cache without ever importing
+    FastF1 -- which is what lets this run in a few hundred MB.
+
+    The files are the source of truth at boot, so this overwrites rather than
+    using SET NX: a redeploy exists precisely to publish corrected data.
+
+    Only keys matching the current CACHE_VERSION are loaded. After a version
+    bump, stale files are ignored rather than served, so a half-finished
+    re-prewarm degrades to slow instead of wrong.
+    """
+    if _redis is None:
+        logger.warning("No Redis connection; skipping prewarm seed")
+        return 0
+
+    root = directory or PREWARM_DIR
+    if not root.exists():
+        logger.info("No prewarmed directory at %s; starting cold", root)
+        return 0
+
+    prefix = f"gl:{get_settings().cache_version}:"
+    loaded = skipped = 0
+
+    for path in sorted(root.glob("*.zlib")):
+        key = _filename_to_key(path.name)
+        if not key.startswith(prefix):
+            skipped += 1
+            continue
+        try:
+            # ex=None means no expiry. Everything here is either a settled
+            # race or will be replaced by the next scheduled prewarm, so
+            # there is nothing for a TTL to protect against.
+            await _redis.set(key, path.read_bytes(), ex=None)
+            loaded += 1
+        except (RedisError, OSError) as exc:
+            logger.warning("Could not seed %s: %s", key, exc)
+
+    logger.info(
+        "Seeded %d prewarmed payloads from disk (%d skipped: wrong cache version)",
+        loaded,
+        skipped,
+    )
+    return loaded
 
 
 # --- Invalidation ---------------------------------------------------------

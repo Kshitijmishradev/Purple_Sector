@@ -8,6 +8,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from starlette.datastructures import MutableHeaders
 
 from . import cache
 from .cache import ComputationInProgress, cached, make_key, ttl_for_event
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.fastf1_cache_dir, exist_ok=True)
     fastf1.Cache.enable_cache(settings.fastf1_cache_dir)
     await cache.connect()
+    await cache.seed_from_disk()
     hub.start()
     yield
     await replay_engine.stop()
@@ -56,13 +58,39 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def cache_header(request: Request, call_next):
-    """Surface HIT / MISS / BYPASS in devtools. Worth its five lines."""
-    cache.cache_status.set("BYPASS")
-    response = await call_next(request)
-    response.headers["X-Cache"] = cache.cache_status.get()
-    return response
+class CacheHeaderMiddleware:
+    """Surface HIT / MISS / BYPASS in devtools. Worth its handful of lines.
+
+    Deliberately a raw ASGI middleware rather than `@app.middleware("http")`.
+    Starlette runs BaseHTTPMiddleware's downstream app in a *separate task*,
+    and a task is spawned with a copy of the context -- so the ContextVar that
+    cached() sets is written into a context this middleware cannot see, and it
+    reads back its own default on every single request. The header said BYPASS
+    forever, including on a verified hit.
+
+    A pure ASGI middleware awaits the app in the same task, and therefore the
+    same context, so it observes the real value.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        cache.cache_status.set("BYPASS")
+
+        async def send_with_header(message):
+            if message["type"] == "http.response.start":
+                MutableHeaders(scope=message)["X-Cache"] = cache.cache_status.get()
+            await send(message)
+
+        await self.app(scope, receive, send_with_header)
+
+
+app.add_middleware(CacheHeaderMiddleware)
 
 
 processor = F1DataProcessor()
@@ -268,6 +296,27 @@ async def lap_compare_telemetry(
 
 # --- Live replay ----------------------------------------------------------
 
+# A replay on a cache miss is a ~680MB pandas job. Unauthenticated, that is a
+# one-request OOM for anyone who finds the URL, so a replay may only be
+# started for a race we have already precomputed. The prewarmed bundle is
+# therefore both the data source and the allowlist -- they cannot drift apart.
+def _replayable() -> set[str]:
+    prefix = f"gl:{settings.cache_version}:analytics:"
+    names = set()
+    if cache.PREWARM_DIR.exists():
+        for path in cache.PREWARM_DIR.glob("*.zlib"):
+            key = cache._filename_to_key(path.name)
+            if key.startswith(prefix):
+                names.add(key[len(prefix):])
+    return names
+
+
+@app.get("/replay/available")
+async def replay_available():
+    """Races this deployment can stream, for the UI to offer."""
+    return {"races": sorted(_replayable())}
+
+
 @app.post("/replay/{year}/{gp}")
 async def replay_start(year: int, gp: str, speed: float = Query(10.0, ge=0.1, le=200)):
     """Replay a finished race into Kafka as if it were live.
@@ -275,6 +324,14 @@ async def replay_start(year: int, gp: str, speed: float = Query(10.0, ge=0.1, le
     Reads through the Redis cache, so restarting a replay while you iterate
     costs milliseconds rather than a fresh FastF1 load.
     """
+    slug = make_key("analytics", year, gp).split(":", 3)[3]
+    available = _replayable()
+    if available and slug not in available:
+        raise HTTPException(
+            404,
+            f"No precomputed data for {year} {gp}. Available: {sorted(available)}",
+        )
+
     async def loader():
         return await cached(
             make_key("analytics", year, gp),
