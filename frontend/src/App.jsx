@@ -9,6 +9,7 @@ import CalenderPage from "./features/calender/CalenderPage";
 import TelemetryPage from "./features/telemetry/TelemetryPage";
 import LivePage from "./features/live/LivePage";
 import LandingPage from "./features/landing/LandingPage";
+import DocsPage from "./features/docs/DocsPage";
 
 import { useEffect } from "react";
 import axios from "axios";
@@ -109,6 +110,14 @@ function AppShell() {
         availableGPs={availableGPs}
       />
       <main className="mx-auto max-w-[1600px] px-4 pb-10 pt-28 sm:px-6 sm:pt-32">
+        {import.meta.env.VITE_DEMO_MODE === "true" && (
+          <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">MVP demo data</span>
+            <span className="mx-2 text-primary/60">·</span>
+            Latest five completed races, precomputed for a free deployment.
+            The Render API may take a moment to wake from sleep.
+          </div>
+        )}
         <Routes>
           <Route
             path="/lap-times"
@@ -121,6 +130,7 @@ function AppShell() {
               />,
             )}
           />
+          <Route path="/docs" element={<DocsPage />} />
           <Route
             path="/telemetry"
             element={renderPage(
