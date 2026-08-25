@@ -2,10 +2,39 @@
    Scoped under .ps-landing; shares tokens.css with the app. */
 
 .ps-landing {
-  background: var(--ps-void);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(6, 8, 11, 0.22) 0%,
+      rgba(6, 8, 11, 0.52) 36%,
+      var(--ps-void) 74%,
+      var(--ps-void) 100%
+    ),
+    url("../../assets/rain-study-bright.png") center top / cover no-repeat,
+    var(--ps-void);
   color: var(--ps-text);
   font-family: var(--ps-mono);
   min-height: 100vh;
+  position: relative;
+}
+
+.ps-landing::before {
+  background: linear-gradient(
+    90deg,
+    rgba(6, 8, 11, 0.68) 0%,
+    rgba(6, 8, 11, 0.18) 42%,
+    rgba(6, 8, 11, 0.55) 100%
+  );
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.ps-landing > * {
+  position: relative;
+  z-index: 1;
 }
 
 .ps-landing * {
@@ -25,7 +54,7 @@
   border-bottom: 1px solid var(--ps-line);
   position: sticky;
   top: 0;
-  background: rgba(6, 8, 11, 0.88);
+  background: rgba(6, 8, 11, 0.7);
   backdrop-filter: blur(8px);
   z-index: 10;
 }
@@ -122,6 +151,190 @@
   flex-wrap: wrap;
   gap: 12px;
   margin: 32px 0 0;
+}
+
+/* --- Story ---------------------------------------------------------------- */
+
+.ps-story {
+  padding: 96px 0 108px;
+  border-bottom: 1px solid var(--ps-line);
+  background: linear-gradient(180deg, rgba(11, 16, 22, 0.18), var(--ps-void));
+}
+.ps-story h2 {
+  font-family: var(--ps-display);
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--ps-bright);
+  margin: 12px 0 0;
+  max-width: 12ch;
+}
+.ps-story-list {
+  display: grid;
+  gap: 1px;
+  margin-top: 58px;
+  border: 1px solid var(--ps-line);
+  background: var(--ps-line);
+}
+.ps-story-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+  min-height: 300px;
+  background: rgba(11, 16, 22, 0.83);
+  overflow: hidden;
+}
+.ps-story-copy {
+  align-self: center;
+  padding: 46px clamp(26px, 5vw, 70px);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 700ms ease var(--story-delay), transform 700ms ease var(--story-delay);
+}
+.ps-story-card.is-visible .ps-story-copy {
+  opacity: 1;
+  transform: translateY(0);
+}
+.ps-story-index {
+  display: block;
+  color: var(--ps-purple);
+  font-family: var(--ps-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  margin-bottom: 28px;
+}
+.ps-story-copy h3 {
+  font-family: var(--ps-display);
+  font-size: clamp(25px, 3vw, 40px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--ps-bright);
+  margin: 12px 0 0;
+  max-width: 12ch;
+}
+.ps-story-copy p {
+  color: var(--ps-dim);
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 18px 0 0;
+  max-width: 48ch;
+}
+.ps-story-signal {
+  display: inline-block;
+  color: var(--ps-text);
+  font-family: var(--ps-mono);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  margin-top: 24px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ps-line-2);
+}
+.ps-story-art {
+  position: relative;
+  min-height: 300px;
+  overflow: hidden;
+  background:
+    linear-gradient(120deg, rgba(37, 23, 50, 0.5), rgba(19, 36, 45, 0.15)),
+    url("../../assets/rain-study-bright.png") center / cover;
+  isolation: isolate;
+}
+.ps-story-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(11, 16, 22, 0.88), transparent 48%);
+  z-index: -1;
+}
+.ps-art-orbit,
+.ps-art-track,
+.ps-art-track-secondary,
+.ps-art-pastel,
+.ps-art-marker {
+  position: absolute;
+  display: block;
+}
+.ps-art-orbit {
+  width: 62%;
+  height: 44%;
+  left: 17%;
+  top: 26%;
+  border: 1px solid rgba(207, 172, 232, 0.62);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+  opacity: 0;
+}
+.ps-art-track {
+  width: 92%;
+  height: 42%;
+  left: 5%;
+  top: 32%;
+  border-top: 3px solid var(--ps-purple);
+  border-radius: 50%;
+  transform: rotate(-12deg) skewX(-16deg);
+  filter: drop-shadow(0 0 7px rgba(177, 76, 255, 0.52));
+  opacity: 0;
+}
+.ps-art-track-secondary {
+  left: 9%;
+  top: 41%;
+  width: 74%;
+  border-top-color: rgba(129, 190, 164, 0.8);
+  filter: none;
+  transform: rotate(12deg) skewX(18deg);
+}
+.ps-art-pastel {
+  width: 25%;
+  height: 120%;
+  right: 12%;
+  top: -10%;
+  background: linear-gradient(180deg, transparent, rgba(232, 187, 107, 0.28), transparent);
+  transform: rotate(28deg);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+.ps-art-marker {
+  width: 9px;
+  height: 9px;
+  left: 54%;
+  top: 42%;
+  background: #f2f7fc;
+  box-shadow: 0 0 0 7px rgba(177, 76, 255, 0.2), 0 0 20px rgba(177, 76, 255, 0.9);
+  opacity: 0;
+}
+.ps-story-card.is-visible .ps-art-orbit {
+  animation: ps-draw-orbit 1100ms ease var(--story-delay) forwards;
+}
+.ps-story-card.is-visible .ps-art-track {
+  animation: ps-draw-track 1300ms cubic-bezier(0.22, 0.7, 0.3, 1) var(--story-delay) forwards;
+}
+.ps-story-card.is-visible .ps-art-track-secondary {
+  animation-delay: calc(var(--story-delay) + 180ms);
+}
+.ps-story-card.is-visible .ps-art-pastel {
+  animation: ps-pastel-drift 1600ms ease calc(var(--story-delay) + 220ms) forwards;
+}
+.ps-story-card.is-visible .ps-art-marker {
+  animation: ps-marker-arrive 500ms ease calc(var(--story-delay) + 900ms) forwards;
+}
+.ps-story-art-2 .ps-art-track { transform: rotate(4deg) skewX(-18deg); }
+.ps-story-art-3 .ps-art-track { transform: rotate(-27deg) skewX(15deg); }
+.ps-story-art-4 .ps-art-track { transform: rotate(19deg) skewX(-22deg); }
+.ps-story-art-5 .ps-art-track { border-top-width: 5px; }
+
+@keyframes ps-draw-track {
+  from { clip-path: inset(0 100% 0 0); opacity: 0; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+@keyframes ps-draw-orbit {
+  from { transform: rotate(-18deg) scale(0.8); opacity: 0; }
+  to { transform: rotate(-18deg) scale(1); opacity: 1; }
+}
+@keyframes ps-pastel-drift {
+  from { transform: translateX(35px) rotate(28deg); opacity: 0; }
+  to { transform: translateX(0) rotate(28deg); opacity: 1; }
+}
+@keyframes ps-marker-arrive {
+  from { transform: scale(0.2); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* --- Speed trace (signature) --------------------------------------------- */
@@ -294,5 +507,22 @@
 @media (max-width: 640px) {
   .ps-hero { padding-top: 56px; }
   .ps-trace { height: 190px; }
+  .ps-story { padding: 68px 0 78px; }
+  .ps-story-card { grid-template-columns: 1fr; }
+  .ps-story-art { min-height: 220px; }
+  .ps-story-copy { padding: 32px 24px 34px; }
   .ps-section { padding: 54px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-story-copy,
+  .ps-art-orbit,
+  .ps-art-track,
+  .ps-art-pastel,
+  .ps-art-marker {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+    transition: none;
+  }
 }
