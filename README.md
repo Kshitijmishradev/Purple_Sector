@@ -138,6 +138,53 @@ weekly; to build that bundle yourself:
 python scripts/prewarm.py --all
 ```
 
+## Free MVP deployment
+
+The public MVP uses two services:
+
+- **Cloudflare Pages** hosts the static React frontend.
+- **Render Free Web Service** hosts `backend/demo_api.py`, which serves only
+  the committed precomputed demo bundle.
+
+Cloudflare Pages settings:
+
+| Setting | Value |
+|---|---|
+| Root directory | `frontend` |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| `VITE_API_URL` | `https://purple-sector-mvp-api.onrender.com` |
+| `VITE_DEMO_MODE` | `true` |
+| `VITE_SEASONS` | `2026` |
+
+Render settings:
+
+| Setting | Value |
+|---|---|
+| Root directory | `backend` |
+| Build command | `pip install -r requirements-demo.txt` |
+| Start command | `uvicorn demo_api:app --host 0.0.0.0 --port $PORT` |
+| Health check | `/health` |
+| `ALLOWED_ORIGINS` | `https://purple-sector.pages.dev` |
+
+`ALLOWED_ORIGINS` must contain the exact origin of the page making browser
+requests. Cloudflare deployment preview URLs have a generated subdomain, for
+example `https://04764086.purple-sector.pages.dev`, and are different from the
+stable production URL. Add a preview origin temporarily when testing a
+preview, or open the production Pages URL instead:
+
+```text
+https://purple-sector.pages.dev,https://04764086.purple-sector.pages.dev
+```
+
+After changing either service's environment variables, rebuild that service.
+The Render free instance may sleep when inactive, so its first request can
+take longer while the service wakes up.
+
+The MVP API exposes `/health`, `/demo/manifest`, and the read-only race,
+calendar, analytics, insight, track-intelligence, telemetry, and replay data
+routes. It does not run FastF1, Redis, Kafka, or WebSockets in production.
+
 ---
 
 ## Measured, not claimed

@@ -220,6 +220,11 @@ export default function DocsPage() {
               <div className="ps-docs-deploy-card"><span>03</span><b>Refresh</b><p>A weekly workflow rebuilds the latest five races and republishes the bundle.</p></div>
             </div>
             <pre className="ps-docs-code"><code>{"python scripts/build_demo_bundle.py\nnpm run build\n# frontend → Cloudflare Pages\n# API      → Render Free"}</code></pre>
+            <div className="ps-docs-deploy-note">
+              <b>Two URLs, one trust boundary</b>
+              <p>Set <code>VITE_API_URL</code> in Cloudflare Pages to the Render API URL. Set <code>ALLOWED_ORIGINS</code> in Render to the stable Cloudflare Pages origin, such as <code>https://purple-sector.pages.dev</code>.</p>
+              <p>Cloudflare preview deployments use generated origins. If you test one, add that exact preview origin temporarily or test the production URL. The Render free instance may sleep between visits, so its first request can be slower.</p>
+            </div>
           </section>
 
           <section className="ps-docs-chapter" id="limits">
