@@ -62,7 +62,7 @@ export const useRaceCalendar = (year) => {
   });
 };
 
-export const useRaceTrackIntel = (year, gp) => {
+export const useRaceTrackIntel = (year, gp, enabled = true) => {
   return useQuery({
     queryKey: ["raceTrackIntel", year, gp],
     queryFn: async () => {
@@ -70,7 +70,7 @@ export const useRaceTrackIntel = (year, gp) => {
       return data;
     },
     staleTime: Infinity,
-    enabled: !!year && !!gp,
+    enabled: enabled && !!year && !!gp,
   });
 };
 
