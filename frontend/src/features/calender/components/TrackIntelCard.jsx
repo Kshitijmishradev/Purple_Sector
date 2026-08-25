@@ -5,14 +5,18 @@ const formatMetric = (value, unit) => {
   return `${value} ${unit}`;
 };
 
-const TrackIntelCard = ({ trackIntel, isLoading, error }) => {
+const TrackIntelCard = ({ trackIntel, isLoading, error, unavailable }) => {
   return (
     <div className="bg-[#1b1b24] border-l-2 border-white/10 p-5">
       <p className="text-[10px] uppercase tracking-[0.22em] text-[#ffb4a7] font-bold">
         Circuit Intel
       </p>
 
-      {isLoading ? (
+      {unavailable ? (
+        <p className="mt-3 text-sm text-white/60">
+          Circuit intelligence is not included in the MVP bundle for this race.
+        </p>
+      ) : isLoading ? (
         <p className="mt-3 text-sm text-white/60">Loading track intel...</p>
       ) : error ? (
         <p className="mt-3 text-sm text-red-300">Track intel unavailable</p>
