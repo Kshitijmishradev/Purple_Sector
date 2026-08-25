@@ -16,14 +16,19 @@ const CalendarRaceList = ({ events, selectedRaceName, onSelectRace }) => {
 
       <ScrollArea className="h-[min(70vh,720px)] px-6 pb-6">
         <div className="space-y-3 pr-3">
-          {events.map((event) => (
+          {events.length ? events.map((event) => (
             <CalendarRaceCard
               key={`${event.RoundNumber}-${event.EventName}`}
               event={event}
               isActive={selectedRaceName === event.EventName}
               onClick={() => onSelectRace(event)}
             />
-          ))}
+          )) : (
+            <div className="border border-dashed border-border p-6 text-center">
+              <p className="ps-label text-primary">No matching rounds</p>
+              <p className="mt-2 text-sm text-muted-foreground">Try another filter or search term.</p>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </section>
