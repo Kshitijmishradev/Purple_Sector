@@ -1,0 +1,53 @@
+name: Refresh Purple Sector MVP bundle
+
+on:
+  schedule:
+    - cron: "0 8 * * 2"
+  workflow_dispatch:
+
+concurrency:
+  group: demo-bundle
+  cancel-in-progress: false
+
+jobs:
+  build-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install data-generation dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Restore FastF1 cache
+        uses: actions/cache@v4
+        with:
+          path: backend/data_cache
+          key: fastf1-demo-${{ github.run_id }}
+          restore-keys: |
+            fastf1-demo-
+            fastf1-2026-
+
+      - name: Build and validate latest five races
+        run: python scripts/build_demo_bundle.py
+
+      - name: Publish bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/demo_data
+          if git diff --staged --quiet; then
+            echo "No demo data changed"
+          else
+            git commit -m "chore: refresh five-race MVP bundle"
+            git push
+          fi
