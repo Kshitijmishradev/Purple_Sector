@@ -21,6 +21,7 @@ const navLinks = [
   // flags, safety cars, stewards' investigations -- was unreachable.
   { to: "/race-control", label: "Race Control" },
   { to: "/calender", label: "Calendar" },
+  { to: "/docs", label: "Docs" },
 ];
 
 // Local dev talks to a backend that can compute any season on demand, so it
@@ -76,7 +77,7 @@ const TopNavbar = ({
           </span>
         </Link>
 
-        <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">
+        <nav className="order-3 flex w-full min-w-0 items-center gap-x-6 gap-y-1 overflow-x-auto pb-1 [scrollbar-width:none] sm:order-none sm:w-auto sm:flex-1 sm:flex-wrap [&::-webkit-scrollbar]:hidden">
           {navLinks.map((item) => (
             <NavLink
               key={item.to}
