@@ -12,6 +12,10 @@ interface is built around that one convention: purple for fastest, green for
 a personal best, yellow for slower. If you've watched a broadcast timing
 screen, there's nothing new to learn here.
 
+## Live demo
+
+Explore the deployed race analytics dashboard: [purple-sector.pages.dev](https://purple-sector.pages.dev/)
+
 ---
 
 ## Why a replay engine, not a live feed
